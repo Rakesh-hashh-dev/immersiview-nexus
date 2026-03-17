@@ -104,6 +104,12 @@ const ChartTooltipContent = React.forwardRef<
     {
       active,
       payload,
+      label,
+      ...props
+    }: any,
+    ref,
+  ) => {
+    const {
       className,
       indicator = "dot",
       hideLabel = false,
