@@ -185,6 +185,59 @@ const PodDetailPanel = ({
   );
 };
 
+const SystemHealthItem = ({ item }: { item: typeof systemHealth[0] }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      className="cursor-pointer rounded-md transition-colors hover:bg-muted/20"
+      onClick={() => setOpen((p) => !p)}
+    >
+      <div className="flex items-center justify-between px-1 py-1">
+        <div className="flex items-center gap-2">
+          <item.icon className={`w-3.5 h-3.5 ${item.ok ? "text-primary" : "text-warning"}`} />
+          <span className="text-xs text-muted-foreground">{item.label}</span>
+        </div>
+        <span className={`text-xs font-mono ${item.ok ? "neon-text-cyan" : "text-warning"}`}>
+          {item.status}
+        </span>
+      </div>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden px-1 pb-2"
+          >
+            <div className="flex gap-3 mb-2 mt-1">
+              {Object.entries(item.stats).map(([k, v]) => (
+                <div key={k} className="flex flex-col">
+                  <span className="text-[9px] uppercase text-muted-foreground">{k}</span>
+                  <span className="text-[11px] font-mono text-foreground">{v}</span>
+                </div>
+              ))}
+            </div>
+            <ResponsiveContainer width="100%" height={55}>
+              <LineChart data={item.history}>
+                <XAxis dataKey="t" stroke="#333" tick={{ fontSize: 8 }} />
+                <YAxis stroke="#333" tick={{ fontSize: 8 }} width={24} domain={["auto", "auto"]} />
+                <RechartsTooltip contentStyle={{ background: "#0f0f0f", border: "1px solid #333", fontSize: 10 }} />
+                <Line
+                  type="monotone"
+                  dataKey="v"
+                  stroke={item.ok ? "#00e5ff" : "#f59e0b"}
+                  strokeWidth={1.5}
+                  dot={{ fill: item.ok ? "#00e5ff" : "#f59e0b", r: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 const PodGrid = ({ pods, onPodClick }: { pods: PodStatus[]; onPodClick: (index: number) => void }) => {
   const podData = useMemo(
     () => pods.map((s, i) => generatePodData(i, s)),
@@ -239,10 +292,38 @@ const PodGrid = ({ pods, onPodClick }: { pods: PodStatus[]; onPodClick: (index: 
 };
 
 const systemHealth = [
-  { label: "Neural Sync", status: "Stable", icon: Wifi, ok: true },
-  { label: "Oxygen Mix", status: "Optimal", icon: Shield, ok: true },
-  { label: "AI Dream Engine", status: "Nominal", icon: Zap, ok: true },
-  { label: "Cooling System", status: "Warning", icon: AlertTriangle, ok: false },
+  {
+    label: "Neural Sync", status: "Stable", icon: Wifi, ok: true,
+    stats: { uptime: "99.9%", latency: "2ms", load: "34%" },
+    history: [
+      { t: "T-5", v: 98 }, { t: "T-4", v: 99 }, { t: "T-3", v: 97 },
+      { t: "T-2", v: 99 }, { t: "T-1", v: 100 }, { t: "Now", v: 99 },
+    ],
+  },
+  {
+    label: "Oxygen Mix", status: "Optimal", icon: Shield, ok: true,
+    stats: { level: "21.2%", pressure: "1.01atm", flow: "Normal" },
+    history: [
+      { t: "T-5", v: 21 }, { t: "T-4", v: 21.1 }, { t: "T-3", v: 21.3 },
+      { t: "T-2", v: 21.2 }, { t: "T-1", v: 21.1 }, { t: "Now", v: 21.2 },
+    ],
+  },
+  {
+    label: "AI Dream Engine", status: "Nominal", icon: Zap, ok: true,
+    stats: { tasks: "1,240", queue: "3", cpu: "61%" },
+    history: [
+      { t: "T-5", v: 55 }, { t: "T-4", v: 60 }, { t: "T-3", v: 58 },
+      { t: "T-2", v: 63 }, { t: "T-1", v: 59 }, { t: "Now", v: 61 },
+    ],
+  },
+  {
+    label: "Cooling System", status: "Warning", icon: AlertTriangle, ok: false,
+    stats: { temp: "38.4°C", fan: "92%", coolant: "Low" },
+    history: [
+      { t: "T-5", v: 34 }, { t: "T-4", v: 35 }, { t: "T-3", v: 36 },
+      { t: "T-2", v: 37 }, { t: "T-1", v: 38 }, { t: "Now", v: 38.4 },
+    ],
+  },
 ];
 
 const initialAlerts = [
@@ -344,13 +425,7 @@ const OperationsControl = () => {
           <h3 className="metric-label">System Health</h3>
           <div className="space-y-2.5">
             {systemHealth.map((s) => (
-              <div key={s.label} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <s.icon className={`w-3.5 h-3.5 ${s.ok ? "text-primary" : "text-warning"}`} />
-                  <span className="text-xs text-muted-foreground">{s.label}</span>
-                </div>
-                <span className={`text-xs font-mono ${s.ok ? "neon-text-cyan" : "text-warning"}`}>{s.status}</span>
-              </div>
+              <SystemHealthItem key={s.label} item={s} />
             ))}
           </div>
         </GlassCard>
