@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import GlassCard from "./GlassCard";
-import { Shield, Wifi, Zap, AlertTriangle } from "lucide-react";
+import { Shield, Wifi, Zap, AlertTriangle, X, Activity, Brain, Thermometer, Clock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type PodStatus = "active" | "standby" | "maintenance";
@@ -9,6 +10,12 @@ interface PodData {
   userId: string;
   heartRate: number;
   neuralLoad: number;
+}
+
+interface TimelineEvent {
+  time: string;
+  label: string;
+  type: "start" | "experience" | "biometric" | "system" | "end";
 }
 
 const generatePodData = (index: number, status: PodStatus): PodData => {
@@ -20,7 +27,141 @@ const generatePodData = (index: number, status: PodStatus): PodData => {
   };
 };
 
-const PodGrid = ({ pods }: { pods: PodStatus[] }) => {
+const experiencePool = [
+  "Deep Ocean Exploration", "Mars Colony Tour", "Neural Meditation",
+  "Zero-G Concert", "Memory Lane Replay", "Quantum Dream State",
+  "Rainforest Immersion", "Aurora Borealis Flight", "Ancient Rome Walk",
+];
+
+const generateTimeline = (index: number, status: PodStatus): TimelineEvent[] => {
+  if (status === "maintenance") {
+    return [
+      { time: "14:00", label: "Maintenance cycle initiated", type: "system" },
+      { time: "14:02", label: "Neural calibration reset", type: "system" },
+      { time: "14:05", label: "Coolant flush in progress", type: "system" },
+    ];
+  }
+  if (status === "standby") {
+    return [
+      { time: "13:45", label: "Previous session ended", type: "end" },
+      { time: "13:46", label: "Pod sanitization complete", type: "system" },
+      { time: "13:50", label: "Awaiting next user", type: "system" },
+    ];
+  }
+  const seed = index * 7 + 13;
+  const exp = experiencePool[seed % experiencePool.length];
+  const startH = 6 + (seed % 12);
+  return [
+    { time: `${String(startH).padStart(2, "0")}:${String(seed % 60).padStart(2, "0")}`, label: "User entered pod — biometric scan OK", type: "start" },
+    { time: `${String(startH).padStart(2, "0")}:${String((seed + 3) % 60).padStart(2, "0")}`, label: "Neural sync established at 99.2%", type: "system" },
+    { time: `${String(startH).padStart(2, "0")}:${String((seed + 5) % 60).padStart(2, "0")}`, label: `Experience loaded: ${exp}`, type: "experience" },
+    { time: `${String(startH + 1).padStart(2, "0")}:${String((seed + 12) % 60).padStart(2, "0")}`, label: "Heart rate spike — auto-adjusted stimulus", type: "biometric" },
+    { time: `${String(startH + 2).padStart(2, "0")}:${String((seed + 30) % 60).padStart(2, "0")}`, label: "REM phase detected — deepening immersion", type: "biometric" },
+    { time: `${String(startH + 4).padStart(2, "0")}:${String((seed + 45) % 60).padStart(2, "0")}`, label: "Experience milestone reached (75%)", type: "experience" },
+    { time: `${String(startH + 6).padStart(2, "0")}:${String((seed + 50) % 60).padStart(2, "0")}`, label: "Session ongoing — all vitals nominal", type: "system" },
+  ];
+};
+
+const typeIcon = (type: TimelineEvent["type"]) => {
+  switch (type) {
+    case "start": return <Clock className="w-3 h-3 text-primary" />;
+    case "experience": return <Brain className="w-3 h-3 text-accent" />;
+    case "biometric": return <Activity className="w-3 h-3 text-neon-pink" />;
+    case "system": return <Zap className="w-3 h-3 text-muted-foreground" />;
+    case "end": return <Clock className="w-3 h-3 text-warning" />;
+  }
+};
+
+const PodDetailPanel = ({
+  podIndex,
+  status,
+  data,
+  onClose,
+}: {
+  podIndex: number;
+  status: PodStatus;
+  data: PodData;
+  onClose: () => void;
+}) => {
+  const timeline = useMemo(() => generateTimeline(podIndex, status), [podIndex, status]);
+  const seed = podIndex * 7 + 13;
+  const temp = status === "maintenance" ? "—" : `${36.2 + (seed % 8) * 0.1}°C`;
+  const sessionDur = status === "active" ? `${1 + (seed % 8)}h ${seed % 55}m` : "—";
+  const experience = status === "active" ? experiencePool[seed % experiencePool.length] : "—";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 12, scale: 0.97 }}
+      transition={{ duration: 0.25 }}
+      className="glass-card p-0 overflow-hidden mt-3"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+        <div className="flex items-center gap-3">
+          <div className={`w-3 h-3 rounded-full ${
+            status === "active" ? "bg-primary neon-glow-cyan" : status === "standby" ? "bg-yellow-500" : "bg-destructive animate-pulse"
+          }`} />
+          <div>
+            <span className="text-sm font-mono font-semibold text-foreground">Pod {podIndex + 1}</span>
+            <span className={`ml-2 uppercase text-[9px] px-1.5 py-0.5 rounded font-mono ${
+              status === "active" ? "bg-primary/20 text-primary" : status === "standby" ? "bg-yellow-500/20 text-yellow-400" : "bg-destructive/20 text-destructive"
+            }`}>{status}</span>
+          </div>
+        </div>
+        <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_1.5fr] divide-y sm:divide-y-0 sm:divide-x divide-border/30">
+        {/* Stats */}
+        <div className="p-4 space-y-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-2">Session Data</p>
+          {[
+            { label: "User ID", value: data.userId },
+            { label: "Heart Rate", value: status !== "maintenance" ? `${data.heartRate} bpm` : "—", icon: <Activity className="w-3 h-3 text-neon-pink" /> },
+            { label: "Neural Load", value: status !== "maintenance" ? `${data.neuralLoad}%` : "—", icon: <Brain className="w-3 h-3 text-primary" />, highlight: data.neuralLoad > 85 },
+            { label: "Core Temp", value: temp, icon: <Thermometer className="w-3 h-3 text-warning" /> },
+            { label: "Duration", value: sessionDur, icon: <Clock className="w-3 h-3 text-muted-foreground" /> },
+            { label: "Experience", value: experience },
+          ].map((row) => (
+            <div key={row.label} className="flex items-center justify-between text-[11px] font-mono">
+              <span className="text-muted-foreground flex items-center gap-1.5">
+                {row.icon}
+                {row.label}
+              </span>
+              <span className={row.highlight ? "text-warning" : "text-foreground"}>{row.value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Timeline */}
+        <div className="p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-3">Session Timeline</p>
+          <div className="relative space-y-0">
+            {timeline.map((evt, i) => (
+              <div key={i} className="flex items-start gap-3 relative pb-3 last:pb-0">
+                {/* Vertical line */}
+                {i < timeline.length - 1 && (
+                  <div className="absolute left-[5.5px] top-4 w-px h-[calc(100%-4px)] bg-border/40" />
+                )}
+                <div className="mt-0.5 flex-shrink-0">{typeIcon(evt.type)}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-foreground leading-tight">{evt.label}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{evt.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const PodGrid = ({ pods, onPodClick }: { pods: PodStatus[]; onPodClick: (index: number) => void }) => {
   const podData = useMemo(
     () => pods.map((s, i) => generatePodData(i, s)),
     [pods]
@@ -35,6 +176,7 @@ const PodGrid = ({ pods }: { pods: PodStatus[] }) => {
             <Tooltip key={i}>
               <TooltipTrigger asChild>
                 <div
+                  onClick={() => onPodClick(i)}
                   className={`aspect-square rounded-[2px] transition-colors duration-700 cursor-pointer ${
                     status === "active"
                       ? "bg-primary/30 hover:bg-primary"
@@ -110,6 +252,7 @@ const initPods = (): PodStatus[] =>
 
 const OperationsControl = () => {
   const [pods, setPods] = useState<PodStatus[]>(initPods);
+  const [selectedPod, setSelectedPod] = useState<number | null>(null);
   const [alerts, setAlerts] = useState(initialAlerts);
 
   const mutatePods = useCallback(() => {
@@ -151,7 +294,17 @@ const OperationsControl = () => {
             <span className="flex items-center gap-1"><span className="status-dot-warning" /> {counts.maintenance} Maintenance</span>
           </div>
         </div>
-        <PodGrid pods={pods} />
+        <PodGrid pods={pods} onPodClick={(i) => setSelectedPod(selectedPod === i ? null : i)} />
+        <AnimatePresence>
+          {selectedPod !== null && (
+            <PodDetailPanel
+              podIndex={selectedPod}
+              status={pods[selectedPod]}
+              data={generatePodData(selectedPod, pods[selectedPod])}
+              onClose={() => setSelectedPod(null)}
+            />
+          )}
+        </AnimatePresence>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2 border-t border-border/30">
           {cities.map((c) => (
             <div key={c.name} className="text-center">
