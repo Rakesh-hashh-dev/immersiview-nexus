@@ -252,6 +252,7 @@ const initPods = (): PodStatus[] =>
 
 const OperationsControl = () => {
   const [pods, setPods] = useState<PodStatus[]>(initPods);
+  const [selectedPod, setSelectedPod] = useState<number | null>(null);
   const [alerts, setAlerts] = useState(initialAlerts);
 
   const mutatePods = useCallback(() => {
