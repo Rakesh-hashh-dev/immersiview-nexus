@@ -1,4 +1,6 @@
-import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Bell, X } from "lucide-react";
 import HeroMetrics from "@/components/dashboard/HeroMetrics";
 import BalancedScorecard from "@/components/dashboard/BalancedScorecard";
 import UserExperienceAnalytics from "@/components/dashboard/UserExperienceAnalytics";
