@@ -52,9 +52,9 @@ const quadrants = [
     icon: Server,
     color: "neon-text-pink",
     items: [
-      { label: "Pod Uptime", value: "99.999%" },
+      { label: "Pod Uptime", value: "95.377%" },
       { label: "Avg Load Time", value: "1.2s" },
-      { label: "Session Success Rate", value: "99.2%" },
+      { label: "Session Success Rate", value: "98.2%" },
     ],
   },
   {
