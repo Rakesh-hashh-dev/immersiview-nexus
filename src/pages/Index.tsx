@@ -190,7 +190,7 @@ const Index = () => {
         IMMERSISPHERE CORP © 2050 — NEURAL SYNC AT 99.4% STABILITY
       </p>
       <p className="text-[15px] font-mono text-muted-foreground tracking-[0.15em]">
-        The TEAM - Rakesh | Swayam | Yashi | Manoj | Shubh | Lakshita | Kunal | Anuj
+        The TEAM - Rakesh | Swayam | Yashi | Manoj | Shubh | Lakshita | Kunal | Anuj | Soumya
       </p>
     </motion.div>
   </div>
