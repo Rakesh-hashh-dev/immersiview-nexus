@@ -190,7 +190,7 @@ const Index = () => {
         IMMERSISPHERE CORP © 2050 — NEURAL SYNC AT 99.4% STABILITY
       </p>
       <p className="text-[15px] font-mono text-muted-foreground tracking-[0.15em]">
-        Rakesh Swayam Yashi Manoj Shubh Lakshita Kunal
+        The TEAM - Rakesh Swayam Yashi Manoj Shubh Lakshita Kunal
       </p>
     </motion.div>
   </div>
