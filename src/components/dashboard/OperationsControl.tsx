@@ -1,26 +1,76 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import GlassCard from "./GlassCard";
 import { Shield, Wifi, Zap, AlertTriangle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type PodStatus = "active" | "standby" | "maintenance";
 
-const PodGrid = ({ pods }: { pods: PodStatus[] }) => (
-  <div className="grid gap-[2px]" style={{ gridTemplateColumns: "repeat(20, 1fr)" }}>
-    {pods.map((status, i) => (
-      <div
-        key={i}
-        className={`aspect-square rounded-[2px] transition-colors duration-700 ${
-          status === "active"
-            ? "bg-primary/30 hover:bg-primary"
-            : status === "standby"
-              ? "bg-yellow-500/30"
-              : "bg-destructive/40 animate-pulse"
-        }`}
-        title={`Pod ${i + 1}: ${status}`}
-      />
-    ))}
-  </div>
-);
+interface PodData {
+  userId: string;
+  heartRate: number;
+  neuralLoad: number;
+}
+
+const generatePodData = (index: number, status: PodStatus): PodData => {
+  const seed = index * 7 + 13;
+  return {
+    userId: status === "maintenance" ? "—" : `USR-${(10000 + ((seed * 31) % 90000)).toString()}`,
+    heartRate: status === "maintenance" ? 0 : 58 + (seed % 22),
+    neuralLoad: status === "maintenance" ? 0 : 60 + (seed % 35),
+  };
+};
+
+const PodGrid = ({ pods }: { pods: PodStatus[] }) => {
+  const podData = useMemo(
+    () => pods.map((s, i) => generatePodData(i, s)),
+    [pods]
+  );
+
+  return (
+    <TooltipProvider delayDuration={100}>
+      <div className="grid gap-[2px]" style={{ gridTemplateColumns: "repeat(20, 1fr)" }}>
+        {pods.map((status, i) => {
+          const d = podData[i];
+          return (
+            <Tooltip key={i}>
+              <TooltipTrigger asChild>
+                <div
+                  className={`aspect-square rounded-[2px] transition-colors duration-700 cursor-pointer ${
+                    status === "active"
+                      ? "bg-primary/30 hover:bg-primary"
+                      : status === "standby"
+                        ? "bg-yellow-500/30 hover:bg-yellow-500/60"
+                        : "bg-destructive/40 animate-pulse"
+                  }`}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="glass-card p-0 border-border/50 text-[10px] font-mono min-w-[140px]">
+                <div className="px-2.5 py-1.5 border-b border-border/30 flex items-center justify-between">
+                  <span className="text-foreground font-semibold">Pod {i + 1}</span>
+                  <span className={`uppercase text-[9px] px-1.5 py-0.5 rounded ${
+                    status === "active" ? "bg-primary/20 text-primary" : status === "standby" ? "bg-yellow-500/20 text-yellow-400" : "bg-destructive/20 text-destructive"
+                  }`}>{status}</span>
+                </div>
+                <div className="px-2.5 py-1.5 space-y-1">
+                  <div className="flex justify-between"><span className="text-muted-foreground">User ID</span><span className="text-foreground">{d.userId}</span></div>
+                  {status !== "maintenance" && (
+                    <>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Heart Rate</span><span className="text-foreground">{d.heartRate} bpm</span></div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Neural Load</span>
+                        <span className={d.neuralLoad > 85 ? "text-warning" : "neon-text-cyan"}>{d.neuralLoad}%</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </div>
+    </TooltipProvider>
+  );
+};
 
 const systemHealth = [
   { label: "Neural Sync", status: "Stable", icon: Wifi, ok: true },
