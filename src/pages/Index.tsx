@@ -19,7 +19,35 @@ const SectionTitle = ({ children, delay = 0 }: { children: string; delay?: numbe
   </motion.h2>
 );
 
-const Index = () => (
+const notifications = [
+  { id: 1, text: "Pod Sector 7 — Thermal spike detected", time: "2m ago", read: false },
+  { id: 2, text: "Neural sync calibration complete", time: "15m ago", read: false },
+  { id: 3, text: "Mars Prime hub reached 90% capacity", time: "1h ago", read: true },
+  { id: 4, text: "Monthly report ready for review", time: "3h ago", read: true },
+];
+
+const Index = () => {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [notifOpen, setNotifOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  return (
   <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
     {/* Header */}
     <motion.div
@@ -41,8 +69,79 @@ const Index = () => (
           </p>
         </div>
       </div>
+
       <div className="flex items-center gap-3">
-        <span className="text-[10px] font-mono text-muted-foreground">SYSTEMS OPERATIONAL</span>
+        {/* Search */}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 220, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="relative">
+                <input
+                  ref={searchRef}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search systems..."
+                  className="w-full h-8 pl-3 pr-8 rounded-md bg-muted border border-border/50 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                />
+                <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+          <Search className="w-4 h-4" />
+        </button>
+
+        {/* Notifications */}
+        <div className="relative" ref={notifRef}>
+          <button onClick={() => setNotifOpen(!notifOpen)} className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground relative">
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-[9px] font-mono text-destructive-foreground flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+          <AnimatePresence>
+            {notifOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute right-0 top-10 w-72 glass-card z-50 p-0 overflow-hidden"
+              >
+                <div className="px-3 py-2 border-b border-border/30">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Notifications</p>
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  {notifications.map((n) => (
+                    <div key={n.id} className={`px-3 py-2.5 border-b border-border/20 hover:bg-muted/30 transition-colors ${!n.read ? "bg-primary/5" : ""}`}>
+                      <div className="flex items-start gap-2">
+                        {!n.read && <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
+                        <div className={!n.read ? "" : "ml-3.5"}>
+                          <p className="text-[11px] text-foreground leading-tight">{n.text}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{n.time}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="w-px h-5 bg-border/30 hidden sm:block" />
+        <span className="text-[10px] font-mono text-muted-foreground hidden sm:inline">SYSTEMS OPERATIONAL</span>
         <span className="status-dot-active" />
       </div>
     </motion.div>
