@@ -294,7 +294,17 @@ const OperationsControl = () => {
             <span className="flex items-center gap-1"><span className="status-dot-warning" /> {counts.maintenance} Maintenance</span>
           </div>
         </div>
-        <PodGrid pods={pods} />
+        <PodGrid pods={pods} onPodClick={(i) => setSelectedPod(selectedPod === i ? null : i)} />
+        <AnimatePresence>
+          {selectedPod !== null && (
+            <PodDetailPanel
+              podIndex={selectedPod}
+              status={pods[selectedPod]}
+              data={generatePodData(selectedPod, pods[selectedPod])}
+              onClose={() => setSelectedPod(null)}
+            />
+          )}
+        </AnimatePresence>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2 border-t border-border/30">
           {cities.map((c) => (
             <div key={c.name} className="text-center">
