@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import GlassCard from "./GlassCard";
 import { Shield, Wifi, Zap, AlertTriangle, X, Activity, Brain, Thermometer, Clock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
 type PodStatus = "active" | "standby" | "maintenance";
 
@@ -89,6 +90,16 @@ const PodDetailPanel = ({
   const sessionDur = status === "active" ? `${1 + (seed % 8)}h ${seed % 55}m` : "—";
   const experience = status === "active" ? experiencePool[seed % experiencePool.length] : "—";
 
+  const heartRateHistory = status === "active" ? [
+    { time: "T-6", bpm: 65 + (seed % 10) },
+    { time: "T-5", bpm: 70 + (seed % 8) },
+    { time: "T-4", bpm: data.heartRate + 5 },
+    { time: "T-3", bpm: data.heartRate - 3 },
+    { time: "T-2", bpm: data.heartRate + 8 },
+    { time: "T-1", bpm: data.heartRate - 2 },
+    { time: "Now", bpm: data.heartRate },
+  ] : [];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12, scale: 0.97 }}
@@ -135,6 +146,19 @@ const PodDetailPanel = ({
               <span className={row.highlight ? "text-warning" : "text-foreground"}>{row.value}</span>
             </div>
           ))}
+          {status === "active" && (
+            <div className="mt-3 pt-3 border-t border-border/30">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mb-2">Heart Rate Trend</p>
+              <ResponsiveContainer width="100%" height={80}>
+                <LineChart data={heartRateHistory}>
+                  <XAxis dataKey="time" stroke="#444" tick={{ fontSize: 9 }} />
+                  <YAxis domain={["auto", "auto"]} stroke="#444" tick={{ fontSize: 9 }} width={28} />
+                  <RechartsTooltip contentStyle={{ background: "#0f0f0f", border: "1px solid #333", fontSize: 10 }} />
+                  <Line type="monotone" dataKey="bpm" stroke="#f43f5e" strokeWidth={1.5} dot={{ fill: "#f43f5e", r: 2 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
 
         {/* Timeline */}
